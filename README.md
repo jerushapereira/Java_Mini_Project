@@ -1,71 +1,77 @@
 # Smart Expense & Budget Tracker
 
-A self-hosted personal finance application with a small browser interface, a Node.js REST API, PostgreSQL persistence, and live exchange rates from Frankfurter. This is a new standalone project. No source repository or existing frontend was provided, so its interface is newly authored rather than represented as a preserved design.
+A single-user personal finance application served by Spring Boot. It uses Java 21, Maven, PostgreSQL, Flyway, HTML, CSS, and browser-native JavaScript. No Node.js, npm, frontend build step, AI APIs, AI keys, sample transactions, or hardcoded exchange rates are required. The existing static UI is served by the Java application.
 
-The application has no AI integrations, AI-generated responses, API keys, sample financial records, or hardcoded exchange rates. It is a single-user local workspace without authentication; do not expose it to an untrusted network without adding access controls.
+This repository was migrated from its prior JavaScript backend to Java. The supported application source is under `src/main/java` and `src/main/resources`; the old `backend/` folder is no longer part of the application.
 
 ## Requirements
 
-- Node.js 20 or newer
-- PostgreSQL 15 or newer
-- Docker Compose is optional for local PostgreSQL
+- Java 21 (JDK)
+- Maven 3.6.3 or newer
+- PostgreSQL 15 or newer, or Docker Compose
 
-## Run locally
+## Start locally
 
-1. From this project directory, start PostgreSQL with `docker compose up -d`. Alternatively, point `DATABASE_URL` at an existing PostgreSQL instance.
-2. Copy `.env.example` to `.env`. Set `DATABASE_URL` to match the database. The example credentials are for local development only.
-3. Install dependencies with `npm install`.
-4. Create the tables with `npm run migrate`. The initial migration is `backend/migrations/001_initial.sql`.
-5. Start the server with `npm start` and open `http://localhost:3000`.
+1. Start a local PostgreSQL database. If Docker Compose is installed, run `docker compose up -d` from the repository root. Otherwise create a database named `expense_tracker` and a user with access to it.
+2. Copy `.env.example` to `.env` and set `DATABASE_URL`, `DB_USERNAME`, and `DB_PASSWORD` for your local database. The application does not load `.env` automatically; export those variables in the shell or configure them in your IDE/run configuration. Spring defaults target a local development database.
+3. From this folder, run `mvn spring-boot:run`.
+4. Open [http://localhost:8080](http://localhost:8080).
 
-The Express server serves the frontend and API from the same origin. `FRONTEND_ORIGIN` limits cross-origin API requests when a separate frontend origin is used. `DATABASE_SSL=true` enables certificate-verified TLS for PostgreSQL. No currency API key or paid subscription is needed.
+Flyway applies `src/main/resources/db/migration/V1__initial_schema.sql` at startup. Hibernate validates the schema and does not create or alter tables. PostgreSQL stores all finance and activity data across restarts. Do not expose this single-user application publicly without adding authentication and access controls.
 
-To stop the local database, use `docker compose down`. Its named volume keeps data between restarts. Remove the volume only when you intentionally want to delete local data.
+PowerShell example for environment variables:
 
-## Tests
-
-Run `npm test`. Tests exercise decimal-safe currency multiplication, rounding, provider response caching, currency validation, and provider outage handling. These tests do not need PostgreSQL or internet access. Database/API integration tests were not run as part of this source scaffold; run them against a configured PostgreSQL instance before production use.
+```powershell
+$env:DATABASE_URL = "jdbc:postgresql://localhost:5432/expense_tracker"
+$env:DB_USERNAME = "expense"
+$env:DB_PASSWORD = "your-local-password"
+mvn spring-boot:run
+```
 
 ## API
 
-All endpoints use JSON except `204 No Content` deletes. Monetary inputs use decimal strings and are persisted as PostgreSQL `NUMERIC(14,2)`. Transaction list responses use `{ items, page, pageSize, total }`, ordered by transaction date and ID descending. List filters include `type`, `category`, `from`, `to`, `month`, `year`, `q`, `paymentMode`, and `incomeSource`.
+JSON monetary values are represented as decimal values. Transaction and budget writes validate positive amounts, supported categories, required income/expense details, and date/period ranges. List pages are one-based. Filters are optional.
 
 | Method and path | Purpose |
 | --- | --- |
-| `GET /api/health` | Database readiness |
-| `GET /api/transactions` | Paged transaction list with filters |
-| `GET /api/transactions/:id` | Read one transaction |
-| `POST /api/transactions` | Create income or expense |
-| `PUT /api/transactions/:id` | Replace transaction fields |
-| `DELETE /api/transactions/:id` | Delete transaction |
-| `GET /api/budgets?month=&year=` | List monthly budgets with spending status |
-| `GET /api/budgets/:id` | Read one budget with spending status |
+| `GET /api/health` | Application and PostgreSQL readiness |
+| `GET /api/categories` | Expense categories |
+| `GET /api/transactions?page=1&pageSize=20` | Paged transactions; supports `type`, `category`, `from`, `to`, `q`, `paymentMode`, `incomeSource` |
+| `GET /api/transactions/{id}` | Read a transaction |
+| `POST /api/transactions` | Create an income or expense |
+| `PUT /api/transactions/{id}` | Replace a transaction |
+| `DELETE /api/transactions/{id}` | Delete a transaction |
+| `GET /api/budgets?month=1&year=2026` | Monthly budgets, spend and status |
+| `GET /api/budgets/{id}` | Read a budget |
 | `POST /api/budgets` | Create a category budget |
-| `PUT /api/budgets/:id` | Update a category budget |
-| `DELETE /api/budgets/:id` | Delete a category budget |
-| `GET /api/dashboard/summary?month=&year=` | Monthly totals, category totals, balance, count |
-| `GET /api/dashboard/category-spending?month=&year=` | Expense totals by category |
-| `GET /api/dashboard/monthly-summary` | Up to 12 months of income and expenses |
-| `GET /api/dashboard/budget-status?month=&year=` | Budget use, remaining amount, warning and exceeded flags |
-| `GET /api/dashboard/recent-transactions` | Latest 10 transactions |
-| `GET /api/activity?limit=` | Recent persisted activity |
-| `GET /api/activity/:id` | Read one activity record |
-| `GET /api/currency/rates?base=INR&date=YYYY-MM-DD` | Real provider rates for a base currency, optional historical date |
-| `GET /api/currency/convert?amount=1000&from=INR&to=USD` | Convert using a provider rate; optional `date` |
+| `PUT /api/budgets/{id}` | Update a budget |
+| `DELETE /api/budgets/{id}` | Delete a budget |
+| `GET /api/dashboard/summary?month=1&year=2026` | Monthly totals and count |
+| `GET /api/dashboard/category-spending?month=1&year=2026` | Category expense totals |
+| `GET /api/dashboard/monthly-summary` | Monthly income and expense totals |
+| `GET /api/dashboard/budget-status?month=1&year=2026` | Budget status and threshold flags |
+| `GET /api/dashboard/recent-transactions` | Latest transactions |
+| `GET /api/activity?limit=20` | Persisted activity history |
+| `GET /api/activity/{id}` | Read an activity entry |
+| `GET /api/currency/rates?base=INR&date=2026-10-21` | Latest or historical Frankfurter rates |
+| `GET /api/currency/convert?amount=100&from=INR&to=USD` | Decimal-safe conversion via Frankfurter |
 
-Transactions require positive amounts, an ISO date, and a valid type. Expenses require one of Food, Travel, Shopping, Education, or Entertainment plus a payment mode. Income requires an income source and does not enter expense-category totals. Budgets are unique per category, month, and year. At least 80% use sets `warning`; spending above the limit sets `exceeded`.
+Currency conversion uses the official no-key Frankfurter v2 API (`/rates?base=INR`, `/rate/{base}/{quote}`, optional `date`). Responses identify provider, rate date, cached state, and stale-cache fallback. Latest responses are cached for six hours. If an external request fails and an expired response is available, the response identifies it as cached and stale; otherwise the currency endpoint returns an error. Transaction and budget features do not depend on Frankfurter. Conversion does not change stored transactions.
 
-## Currency data
+## Tests and build
 
-The backend `CurrencyService` calls Frankfurter v2. It uses `/v2/rates?base=INR` for current rates, `/v2/rate/INR/USD` for a pair, and the documented `date` parameter for historical rates such as `2026-10-21`. The provider documents an unauthenticated API and a flat list of rate records; currency availability is determined by provider responses. Pair and base responses are cached in process for six hours. Responses say whether data is cached; an expired cached result is marked `stale` if refreshing fails. With no cached result, provider timeouts or outages return an error rather than a fabricated rate. Conversion is performed with integer decimal arithmetic and rounded to cents.
+Run `mvn test` and `mvn package`. Current JUnit/Mockito unit tests cover expense creation and validation, dashboard aggregation, budget thresholds, currency decimal conversion, caching, malformed provider data, and provider failure. No PostgreSQL integration or browser automation tests have been implemented yet. No Node runtime or frontend compilation is used. The application cannot start fully without a reachable PostgreSQL database because PostgreSQL is the persistent store.
 
-Frankfurter documentation: [API documentation](https://frankfurter.dev/) and [v2 JavaScript examples](https://frankfurter.dev/javascript/).
+## Data and security notes
 
-## Data and deployment notes
+- Database access uses JPA with parameterized queries. Schema and seed categories are managed by Flyway.
+- Database settings are configured with `DATABASE_URL`, `DB_USERNAME`, and `DB_PASSWORD`; never commit real credentials.
+- There are no user accounts or authentication. Treat this as a private local instance only.
+- There is no analytics integration. Transaction records and activity events are stored in PostgreSQL until manually deleted; deleting a transaction does not erase its activity history.
+- Privacy and Terms pages are available at `/privacy.html` and `/terms.html`. They are project-level informational drafts, not legal advice. Review and adapt them to the actual operator, hosting, retention, and applicable law before launch.
 
-- PostgreSQL migrations create transaction, budget, and activity tables with checks, unique constraints, indexes, and foreign keys.
-- Transaction create/update/delete and budget changes write activity rows in the same database transaction.
-- There is no authentication or user separation. Keep the service bound to a trusted local network until authentication and authorization are added.
-- The included privacy and terms pages describe the behavior of this starter. Update them for the actual operator, jurisdiction, retention policy, and deployment before public launch.
-- A favicon is included. No custom domain is configured. This project is self-hosted and does not include a platform-generated “Made with AI” badge.
-- No existing website was provided, so this deliverable does not claim to preserve an existing frontend or to remove a badge from one.
+## Launch checklist
+
+**NOT READY FOR PUBLIC LAUNCH.** This repository has not been deployed, and no domain or HTTPS endpoint has been configured or verified. The favicon and legal-information pages are included, but should be verified in the deployed environment and the legal drafts reviewed. Authentication and authorization are not implemented; do not expose personal financial records publicly. Production backup, monitoring, and hosting configuration also remain deployment responsibilities.
+
+To stop the optional local database, use `docker compose down`. Keep its named volume unless you intentionally want to remove local data.

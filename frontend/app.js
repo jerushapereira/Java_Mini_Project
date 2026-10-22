@@ -22,7 +22,7 @@ async function api(path, options = {}) {
   const response = await fetch(`/api${path}`, { ...options, headers: { 'Content-Type': 'application/json', ...options.headers } });
   if (response.status === 204) return null;
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`);
+  if (!response.ok) throw new Error(body.error || body.detail || `Request failed (${response.status})`);
   return body;
 }
 function notice(message, isError = false) {
@@ -49,17 +49,17 @@ function drawTransactions(listing) {
   const items = listing.items;
   const body = document.querySelector('#transaction-rows');
   document.querySelector('#transaction-empty').hidden = items.length > 0;
-  document.querySelector('#page-status').textContent = `${listing.total ? (listing.page - 1) * listing.pageSize + 1 : 0}–${Math.min(listing.page * listing.pageSize, listing.total)} of ${listing.total}`;
+  document.querySelector('#page-status').textContent = `${listing.total ? (listing.page - 1) * listing.pageSize + 1 : 0} to ${Math.min(listing.page * listing.pageSize, listing.total)} of ${listing.total}`;
   document.querySelector('#previous-page').disabled = listing.page <= 1;
   document.querySelector('#next-page').disabled = listing.page * listing.pageSize >= listing.total;
-  body.innerHTML = items.map((item) => `<tr><td>${escapeHtml(item.transaction_date?.slice(0, 10))}</td><td>${escapeHtml(item.description || item.income_source || item.category)}</td><td>${escapeHtml(item.category || item.income_source || '—')}</td><td>${escapeHtml(item.type)}</td><td class="amount ${item.type === 'INCOME' ? 'income' : 'expense'}">${item.type === 'INCOME' ? '+' : '−'}${money(item.amount)}</td><td><div class="row-actions"><button data-edit="${item.id}" type="button">Edit</button><button class="delete" data-delete="${item.id}" type="button">Delete</button></div></td></tr>`).join('');
+  body.innerHTML = items.map((item) => `<tr><td>${escapeHtml(item.transactionDate?.slice(0, 10))}</td><td>${escapeHtml(item.description || item.incomeSource || item.category)}</td><td>${escapeHtml(item.category || item.incomeSource || 'Uncategorized')}</td><td>${escapeHtml(item.type)}</td><td class="amount ${item.type === 'INCOME' ? 'income' : 'expense'}">${item.type === 'INCOME' ? '+' : '−'}${money(item.amount)}</td><td><div class="row-actions"><button data-edit="${item.id}" type="button">Edit</button><button class="delete" data-delete="${item.id}" type="button">Delete</button></div></td></tr>`).join('');
   body.querySelectorAll('[data-edit]').forEach((button) => button.addEventListener('click', () => editTransaction(items.find((item) => String(item.id) === button.dataset.edit))));
   body.querySelectorAll('[data-delete]').forEach((button) => button.addEventListener('click', () => deleteTransaction(button.dataset.delete)));
 }
 function drawBudgets(items) {
   const list = document.querySelector('#budget-list');
   document.querySelector('#budget-empty').hidden = items.length > 0;
-  list.innerHTML = items.map((item) => `<div class="budget-row"><div class="budget-top"><strong>${escapeHtml(item.category)}</strong><span>${money(item.spent)} of ${money(item.monthly_limit)}</span></div><div class="track"><span class="${item.warning || item.exceeded ? 'warn' : ''}" style="width:${Math.min(100, item.percentUsed)}%"></span></div><span class="budget-note">${item.exceeded ? `Over by ${money(String(item.remaining).replace('-', ''))}` : `${money(item.remaining)} remaining`} · ${item.percentUsed}% used</span></div>`).join('');
+  list.innerHTML = items.map((item) => `<div class="budget-row"><div class="budget-top"><strong>${escapeHtml(item.category)}</strong><span>${money(item.spent)} of ${money(item.monthlyLimit)}</span></div><div class="track"><span class="${item.warning || item.exceeded ? 'warn' : ''}" style="width:${Math.min(100, item.percentUsed)}%"></span></div><span class="budget-note">${item.exceeded ? `Over by ${money(String(item.remaining).replace('-', ''))}` : `${money(item.remaining)} remaining`} · ${item.percentUsed}% used</span></div>`).join('');
 }
 function drawCategories(items) {
   const list = document.querySelector('#category-list'), max = Math.max(1, ...items.map((item) => Number(item.amount)));
@@ -69,7 +69,7 @@ function drawCategories(items) {
 function drawActivity(items) {
   const list = document.querySelector('#activity-list');
   document.querySelector('#activity-empty').hidden = items.length > 0;
-  list.innerHTML = items.map((item) => `<li>${escapeHtml(item.description)}<time>${new Date(item.created_at).toLocaleString()}</time></li>`).join('');
+  list.innerHTML = items.map((item) => `<li>${escapeHtml(item.description)}<time>${new Date(item.createdAt).toLocaleString()}</time></li>`).join('');
 }
 function setTransactionType() {
   const income = form.elements.type.value === 'INCOME';
@@ -94,7 +94,7 @@ async function editTransaction(item) {
   const amount = window.prompt('Enter the updated amount in INR', item.amount);
   if (amount === null) return;
   try {
-    const payload = { type: item.type, amount, category: item.category, description: item.description, transactionDate: item.transaction_date.slice(0, 10), paymentMode: item.payment_mode, incomeSource: item.income_source };
+    const payload = { type: item.type, amount, category: item.category, description: item.description, transactionDate: item.transactionDate.slice(0, 10), paymentMode: item.paymentMode, incomeSource: item.incomeSource };
     await api(`/transactions/${item.id}`, { method: 'PUT', body: JSON.stringify(payload) });
     notice('Transaction updated.'); await loadDashboard();
   } catch (error) { notice(error.message, true); }

@@ -14,18 +14,18 @@
   <header class="topbar">
     <a class="brand" href="/" aria-label="Ledger home"><span class="brand-mark">L</span><span>Ledger</span></a>
     <nav aria-label="Main navigation"><a class="active" href="/">Overview</a><a href="#transactions">Transactions</a><a href="#budgets">Budgets</a></nav>
-    <div class="top-meta"><span class="status-dot"></span><span>Private workspace</span></div>
+    <div class="top-meta"><span class="status-dot"></span><span>Personal finance</span></div>
   </header>
   <main class="shell">
     <section class="intro">
-      <div><p class="eyebrow" id="period-label"></p><h1>Your money, clearly accounted for.</h1><p class="subhead">A current view of income, spending, and monthly limits.</p></div>
+      <div><p class="eyebrow" id="period-label"></p><h1>Income, expenses, and monthly budgets</h1><p class="subhead">Review recorded transactions, category spending, and budget limits.</p></div>
       <button id="refresh" class="button button-quiet" type="button">Refresh data</button>
     </section>
     <section class="summary-grid" aria-label="Monthly summary">
-      <article class="summary-card"><span>Income</span><strong id="income-total">—</strong><small>Recorded this month</small></article>
-      <article class="summary-card"><span>Expenses</span><strong id="expense-total">—</strong><small>Recorded this month</small></article>
-      <article class="summary-card"><span>Net balance</span><strong id="balance-total">—</strong><small>Income less expenses</small></article>
-      <article class="summary-card"><span>Transactions</span><strong id="transaction-count">—</strong><small>This month</small></article>
+      <article class="summary-card"><span>Income</span><strong id="income-total">Loading</strong><small>Recorded this month</small></article>
+      <article class="summary-card"><span>Expenses</span><strong id="expense-total">Loading</strong><small>Recorded this month</small></article>
+      <article class="summary-card"><span>Net balance</span><strong id="balance-total">Loading</strong><small>Income less expenses</small></article>
+      <article class="summary-card"><span>Transactions</span><strong id="transaction-count">Loading</strong><small>This month</small></article>
     </section>
     <div id="notice" class="notice" role="status" hidden></div>
     <div class="content-grid">
@@ -63,7 +63,7 @@
       </section>
       <section class="panel currency-panel">
         <p class="eyebrow">Reference rates</p><h2>Currency conversion</h2>
-        <form id="currency-form" class="currency-form"><label>Amount<input name="amount" type="number" min="0.00000001" step="any" value="1000" required></label><label>From<input name="from" value="INR" maxlength="3" required></label><label>To<input name="to" value="USD" maxlength="3" required></label><button class="button button-secondary" type="submit">Get conversion</button></form>
+        <form id="currency-form" class="currency-form"><label>Amount<input name="amount" type="number" min="0.00000001" step="any" placeholder="0.00" required></label><label>From<input name="from" value="INR" maxlength="3" required></label><label>To<input name="to" value="USD" maxlength="3" required></label><button class="button button-secondary" type="submit">Get conversion</button></form>
         <p id="currency-result" class="currency-result">Rates are retrieved from Frankfurter when requested.</p>
       </section>
       <section class="panel activity-panel">
