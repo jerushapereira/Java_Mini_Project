@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Track income, expenses and monthly budgets in one private workspace.">
+  <title>Ledger | Expense and Budget Tracker</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/details.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Ledger home"><span class="brand-mark">L</span><span>Ledger</span></a>
+    <nav aria-label="Main navigation"><a class="active" href="/">Overview</a><a href="#transactions">Transactions</a><a href="#budgets">Budgets</a></nav>
+    <div class="top-meta"><span class="status-dot"></span><span>Private workspace</span></div>
+  </header>
+  <main class="shell">
+    <section class="intro">
+      <div><p class="eyebrow" id="period-label"></p><h1>Your money, clearly accounted for.</h1><p class="subhead">A current view of income, spending, and monthly limits.</p></div>
+      <button id="refresh" class="button button-quiet" type="button">Refresh data</button>
+    </section>
+    <section class="summary-grid" aria-label="Monthly summary">
+      <article class="summary-card"><span>Income</span><strong id="income-total">—</strong><small>Recorded this month</small></article>
+      <article class="summary-card"><span>Expenses</span><strong id="expense-total">—</strong><small>Recorded this month</small></article>
+      <article class="summary-card"><span>Net balance</span><strong id="balance-total">—</strong><small>Income less expenses</small></article>
+      <article class="summary-card"><span>Transactions</span><strong id="transaction-count">—</strong><small>This month</small></article>
+    </section>
+    <div id="notice" class="notice" role="status" hidden></div>
+    <div class="content-grid">
+      <section class="panel transaction-panel" id="transactions">
+        <div class="panel-heading"><div><p class="eyebrow">Ledger</p><h2>Transactions</h2></div><label class="search"><span class="sr-only">Search transactions</span><input id="search" type="search" placeholder="Search entries"></label></div>
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Description</th><th>Category / source</th><th>Type</th><th class="numeric">Amount</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody id="transaction-rows"></tbody></table></div>
+        <div class="pager"><button class="text-button" id="previous-page" type="button">Previous</button><span id="page-status"></span><button class="text-button" id="next-page" type="button">Next</button></div>
+        <p class="empty-state" id="transaction-empty" hidden>No entries yet. Add an income or expense to begin.</p>
+      </section>
+      <aside class="panel form-panel">
+        <p class="eyebrow">New record</p><h2>Add transaction</h2>
+        <form id="transaction-form">
+          <label>Type<select name="type" id="type"><option value="EXPENSE">Expense</option><option value="INCOME">Income</option></select></label>
+          <label>Amount (INR)<input name="amount" type="number" min="0.01" step="0.01" required placeholder="0.00"></label>
+          <label>Category<select name="category" id="category"><option>Food</option><option>Travel</option><option>Shopping</option><option>Education</option><option>Entertainment</option></select></label>
+          <label id="payment-field">Payment mode<input name="paymentMode" placeholder="Card, cash, transfer"></label>
+          <label id="source-field" hidden>Income source<input name="incomeSource" placeholder="Salary, freelance"></label>
+          <label>Description<input name="description" maxlength="300" placeholder="Optional note"></label>
+          <label>Date<input name="transactionDate" type="date" required></label>
+          <button class="button button-primary" type="submit">Save transaction</button>
+        </form>
+        <p class="form-hint">Your records are stored in the configured PostgreSQL database.</p>
+      </aside>
+      <section class="panel" id="budgets">
+        <div class="panel-heading"><div><p class="eyebrow">Monthly limits</p><h2>Budgets</h2></div><button class="text-button" id="budget-toggle" type="button">Set a budget</button></div>
+        <form id="budget-form" class="budget-form" hidden>
+          <label>Category<select name="category"><option>Food</option><option>Travel</option><option>Shopping</option><option>Education</option><option>Entertainment</option></select></label>
+          <label>Monthly limit (INR)<input name="monthlyLimit" type="number" min="0.01" step="0.01" required></label>
+          <button class="button button-primary" type="submit">Save budget</button>
+        </form>
+        <div id="budget-list" class="budget-list"></div><p id="budget-empty" class="empty-state" hidden>No budgets set for this month.</p>
+      </section>
+      <section class="panel categories-panel">
+        <p class="eyebrow">Expense mix</p><h2>By category</h2><div id="category-list" class="category-list"></div><p id="category-empty" class="empty-state" hidden>Category totals will appear when expenses are recorded.</p>
+      </section>
+      <section class="panel currency-panel">
+        <p class="eyebrow">Reference rates</p><h2>Currency conversion</h2>
+        <form id="currency-form" class="currency-form"><label>Amount<input name="amount" type="number" min="0.00000001" step="any" value="1000" required></label><label>From<input name="from" value="INR" maxlength="3" required></label><label>To<input name="to" value="USD" maxlength="3" required></label><button class="button button-secondary" type="submit">Get conversion</button></form>
+        <p id="currency-result" class="currency-result">Rates are retrieved from Frankfurter when requested.</p>
+      </section>
+      <section class="panel activity-panel">
+        <p class="eyebrow">Recent changes</p><h2>Activity</h2><ol id="activity-list" class="activity-list"></ol><p id="activity-empty" class="empty-state" hidden>No activity recorded.</p>
+      </section>
+    </div>
+  </main>
+  <footer><span>Ledger · Personal finance records</span><span><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></span></footer>
+</body>
+</html>

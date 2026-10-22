@@ -1,0 +1,2 @@
+.pager{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #edf0eb;padding-top:12px;margin-top:2px;color:#78827b;font-size:10px}.pager button:disabled{color:#aab1ac;cursor:default}
+button,input,select{font-family:Inter,"Segoe UI",Arial,sans-serif}.button{font-size:12px;font-weight:600}.row-actions button,.text-button{font-size:11px;font-weight:600}
